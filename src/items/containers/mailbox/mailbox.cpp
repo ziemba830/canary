@@ -135,7 +135,9 @@ bool Mailbox::getReceiver(Item* item, std::string &name) const {
 		return false;
 	}
 
-	name = getFirstLine(text);
+	name.reserve(text.length());
+
+	getFirstLine(text);
 	trimString(name);
 	return true;
 }
