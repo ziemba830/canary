@@ -60,6 +60,10 @@ bool Creature::canSee(const Position &pos) const {
 }
 
 bool Creature::canSeeCreature(const Creature* creature) const {
+	if (!creature) {
+		return false;
+	}
+
 	if (!canSeeInvisibility() && creature->isInvisible()) {
 		return false;
 	}
@@ -359,6 +363,10 @@ void Creature::onRemoveTileItem(const Tile* updateTile, const Position &pos, con
 }
 
 void Creature::onCreatureAppear(Creature* creature, bool isLogin) {
+	if (!creature) {
+		return;
+	}
+
 	if (creature == this) {
 		if (useCacheMap()) {
 			isMapLoaded = true;
@@ -376,6 +384,10 @@ void Creature::onCreatureAppear(Creature* creature, bool isLogin) {
 }
 
 void Creature::onRemoveCreature(Creature* creature, bool) {
+	if (!creature) {
+		return;
+	}
+
 	onCreatureDisappear(creature, true);
 	if (creature != this && isMapLoaded) {
 		if (creature->getPosition().z == getPosition().z) {
@@ -391,6 +403,10 @@ void Creature::onRemoveCreature(Creature* creature, bool) {
 }
 
 void Creature::onCreatureDisappear(const Creature* creature, bool isLogout) {
+	if (!creature) {
+		return;
+	}
+
 	if (attackedCreature == creature) {
 		setAttackedCreature(nullptr);
 		onAttackedCreatureDisappear(isLogout);
@@ -488,7 +504,7 @@ void Creature::onCreatureMove(Creature* creature, const Tile* newTile, const Pos
 			}
 		}
 
-		if (newTile->getZone() != oldTile->getZone()) {
+		if (newTile && oldTile && newTile->getZone() != oldTile->getZone()) {
 			onChangeZone(getZone());
 		}
 
@@ -1024,6 +1040,10 @@ bool Creature::setFollowCreature(Creature* creature) {
 }
 
 double Creature::getDamageRatio(Creature* attacker) const {
+	if (!attacker) {
+		return 0;
+	}
+
 	uint32_t totalDamage = 0;
 	uint32_t attackerDamage = 0;
 
@@ -1043,6 +1063,10 @@ double Creature::getDamageRatio(Creature* attacker) const {
 }
 
 uint64_t Creature::getGainedExperience(Creature* attacker) const {
+	if (!attacker) {
+		return 0;
+	}
+
 	return std::floor(getDamageRatio(attacker) * getLostExperience());
 }
 
@@ -1120,7 +1144,9 @@ void Creature::onTickCondition(ConditionType_t type, bool &bRemove) {
 }
 
 void Creature::onCombatRemoveCondition(Condition* condition) {
-	removeCondition(condition);
+	if (condition) {
+		removeCondition(condition);
+	}
 }
 
 void Creature::onAttacked() {
@@ -1128,7 +1154,9 @@ void Creature::onAttacked() {
 }
 
 void Creature::onAttackedCreatureDrainHealth(Creature* target, int32_t points) {
-	target->addDamagePoints(this, points);
+	if (target) {
+		target->addDamagePoints(this, points);
+	}
 }
 
 void Creature::onAttackedCreatureKilled(Creature* target) {
@@ -1139,6 +1167,10 @@ void Creature::onAttackedCreatureKilled(Creature* target) {
 }
 
 bool Creature::onKilledCreature(Creature* target, bool lastHit) {
+	if (!target) {
+		return false;
+	}
+
 	if (master) {
 		master->onKilledCreature(target, lastHit);
 	}
@@ -1176,7 +1208,9 @@ void Creature::onGainExperience(uint64_t gainExp, Creature* target) {
 		message.primary.value = gainExp;
 
 		for (Creature* spectator : spectators) {
-			spectator->getPlayer()->sendTextMessage(message);
+			if (const Player* player = spectator->getPlayer()) {
+				player->sendTextMessage(message);
+			}
 		}
 	}
 }
@@ -1215,7 +1249,7 @@ bool Creature::setMaster(Creature* newMaster, bool reloadCreature /* = false*/) 
 }
 
 bool Creature::addCondition(Condition* condition) {
-	if (condition == nullptr) {
+	if (!condition) {
 		return false;
 	}
 
@@ -1237,6 +1271,10 @@ bool Creature::addCondition(Condition* condition) {
 }
 
 bool Creature::addCombatCondition(Condition* condition) {
+	if (!condition) {
+		return false;
+	}
+
 	// Caution: condition variable could be deleted after the call to addCondition
 	ConditionType_t type = condition->getType();
 
@@ -1267,6 +1305,10 @@ void Creature::removeCondition(ConditionType_t type) {
 }
 
 void Creature::removeCondition(ConditionType_t conditionType, ConditionId_t conditionId, bool force /* = false*/) {
+	if (!conditionType) {
+		return;
+	}
+
 	auto it = conditions.begin(), end = conditions.end();
 	while (it != end) {
 		Condition* condition = *it;
