@@ -241,7 +241,7 @@ class Creature : virtual public Thing {
 		}
 
 		// walk functions
-		void startAutoWalk(const std::forward_list<Direction> &listDir, bool ignoreConditions = false);
+		void startAutoWalk(const std::vector<Direction> &listDir, bool ignoreConditions = false);
 		void addEventWalk(bool firstStep = false);
 		void stopEventWalk();
 		virtual void goToFollowCreature();
@@ -479,8 +479,8 @@ class Creature : virtual public Thing {
 
 		double getDamageRatio(Creature* attacker) const;
 
-		bool getPathTo(const Position &targetPos, std::forward_list<Direction> &dirList, const FindPathParams &fpp) const;
-		bool getPathTo(const Position &targetPos, std::forward_list<Direction> &dirList, int32_t minTargetDist, int32_t maxTargetDist, bool fullPathSearch = true, bool clearSight = true, int32_t maxSearchDist = 7) const;
+		bool getPathTo(const Position &targetPos, std::vector<Direction> &dirList, const FindPathParams &fpp) const;
+		bool getPathTo(const Position &targetPos, std::vector<Direction> &dirList, int32_t minTargetDist, int32_t maxTargetDist, bool fullPathSearch = true, bool clearSight = true, int32_t maxSearchDist = 7) const;
 
 		void incrementReferenceCounter() {
 			++referenceCounter;
@@ -517,7 +517,7 @@ class Creature : virtual public Thing {
 		CreatureEventList eventsList;
 		ConditionList conditions;
 
-		std::forward_list<Direction> listWalkDir;
+		std::vector<Direction> listWalkDir;
 
 		Tile* tile = nullptr;
 		Creature* attackedCreature = nullptr;
