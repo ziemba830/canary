@@ -212,6 +212,7 @@ bool CombatSpell::castSpell(Creature* creature) {
 
 		if (needDirection) {
 			var.pos = Spells::getCasterPosition(creature, creature->getDirection());
+			var.directionalArea = true;
 		} else {
 			var.pos = creature->getPosition();
 		}
@@ -222,8 +223,12 @@ bool CombatSpell::castSpell(Creature* creature) {
 	Position pos;
 	if (needDirection) {
 		pos = Spells::getCasterPosition(creature, creature->getDirection());
+		combat->setDirectionArea(true);
+		combat->doCombat(creature, pos);
+		combat->setDirectionArea(false);
 	} else {
 		pos = creature->getPosition();
+		combat->doCombat(creature, pos);
 	}
 
 	if (soundCastEffect != SoundEffect_t::SILENCE) {
@@ -249,6 +254,7 @@ bool CombatSpell::castSpell(Creature* creature, Creature* target) {
 				var.pos = target->getPosition();
 			} else if (needDirection) {
 				var.pos = Spells::getCasterPosition(creature, creature->getDirection());
+				var.directionalArea = true;
 			} else {
 				var.pos = creature->getPosition();
 			}
@@ -430,9 +436,8 @@ bool Spell::playerInstantSpellCheck(Player* player, const Position &toPos) {
 		g_game().map.setTile(toPos, tile);
 	}
 
-	ReturnValue ret = Combat::canDoCombat(player, tile, aggressive);
-	if (ret != RETURNVALUE_NOERROR) {
-		player->sendCancelMessage(ret);
+	if (aggressive && tile->hasFlag(TILESTATE_PROTECTIONZONE) && !player->hasFlag(PlayerFlags_t::IgnoreProtectionZone)) {
+		player->sendCancelMessage(RETURNVALUE_ACTIONNOTPERMITTEDINPROTECTIONZONE);
 		g_game().addMagicEffect(player->getPosition(), CONST_ME_POFF);
 		return false;
 	}
@@ -643,6 +648,7 @@ bool InstantSpell::playerCastInstant(Player* player, std::string &param) {
 		} else {
 			var.type = VARIANT_POSITION;
 			var.pos = Spells::getCasterPosition(player, player->getDirection());
+			var.directionalArea = true;
 
 			if (!playerInstantSpellCheck(player, var.pos)) {
 				return false;
@@ -673,6 +679,7 @@ bool InstantSpell::playerCastInstant(Player* player, std::string &param) {
 
 		if (needDirection) {
 			var.pos = Spells::getCasterPosition(player, player->getDirection());
+			var.directionalArea = true;
 		} else {
 			var.pos = player->getPosition();
 		}
@@ -728,6 +735,7 @@ bool InstantSpell::castSpell(Creature* creature) {
 	} else if (needDirection) {
 		var.type = VARIANT_POSITION;
 		var.pos = Spells::getCasterPosition(creature, creature->getDirection());
+		var.directionalArea = true;
 	} else {
 		var.type = VARIANT_POSITION;
 		var.pos = creature->getPosition();
