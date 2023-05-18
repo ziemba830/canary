@@ -1619,7 +1619,7 @@ bool ConditionFeared::getFleeDirection(Creature* creature) {
 	return false;
 }
 
-bool ConditionFeared::getFleePath(Creature* creature, const Position &pos, std::forward_list<Direction> &dirList) {
+bool ConditionFeared::getFleePath(Creature* creature, const Position &pos, std::vector<Direction> &dirList) {
 	const std::vector<uint8_t> walkSize { 15, 9, 3, 1 };
 	bool found = false;
 	std::ptrdiff_t found_size = 0;
@@ -1720,7 +1720,7 @@ bool ConditionFeared::startCondition(Creature* creature) {
 
 bool ConditionFeared::executeCondition(Creature* creature, int32_t interval) {
 	Position currentPos = creature->getPosition();
-	std::forward_list<Direction> listDir;
+	std::vector<Direction> listDir;
 
 	SPDLOG_DEBUG("[ConditionFeared::executeCondition] Executing condition, current position is {}", currentPos.toString());
 

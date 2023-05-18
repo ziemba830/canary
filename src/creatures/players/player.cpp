@@ -7185,7 +7185,7 @@ SoundEffect_t Player::getAttackSoundEffect() const {
 bool Player::canAutoWalk(const Position &toPosition, const std::function<void()> &function, uint32_t delay /* = 500*/) {
 	if (!Position::areInRange<1, 1>(getPosition(), toPosition)) {
 		// Check if can walk to the toPosition and send event to use function
-		std::forward_list<Direction> listDir;
+		std::vector<Direction> listDir;
 		if (getPathTo(toPosition, listDir, 0, 1, true, true)) {
 			g_dispatcher().addTask(createTask(std::bind(&Game::playerAutoWalk, &g_game(), getID(), listDir)));
 
@@ -7212,7 +7212,7 @@ void Player::addHazardSystemPoints(int32_t amount) {
 			return;
 		}
 
-		SpectatorHashSet spectators;
+		SpectatorVector spectators;
 		g_game().map.getSpectators(spectators, tile->getPosition(), true);
 		for (Creature* spectator : spectators) {
 			if (!spectator || spectator == this) {
@@ -7341,7 +7341,7 @@ void Player::reloadHazardSystemIcon() {
 				return;
 			}
 
-			SpectatorHashSet spectators;
+			SpectatorVector spectators;
 			g_game().map.getSpectators(spectators, tile->getPosition(), true);
 			for (Creature* spectator : spectators) {
 				if (!spectator || spectator == this) {
@@ -7380,7 +7380,7 @@ void Player::decrementeHazardSystemReference() {
 				return;
 			}
 
-			SpectatorHashSet spectators;
+			SpectatorVector spectators;
 			g_game().map.getSpectators(spectators, tile->getPosition(), true);
 			for (Creature* spectator : spectators) {
 				if (!spectator || spectator == this) {

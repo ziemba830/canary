@@ -307,7 +307,7 @@ class ConditionFeared final : public Condition {
 	private:
 		bool canWalkTo(const Creature* creature, Position pos, Direction moveDirection) const;
 		bool getFleeDirection(Creature* creature);
-		bool getFleePath(Creature* creature, const Position &pos, std::forward_list<Direction> &dirList);
+		bool getFleePath(Creature* creature, const Position &pos, std::vector<Direction> &dirList);
 		bool getRandomDirection(Creature* creature, Position pos);
 		bool isStuck(Creature* creature, Position pos) const;
 
