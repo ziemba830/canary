@@ -16,7 +16,7 @@ LuaState &LuaState::operator<<(const LuaNil) {
 }
 
 LuaState &LuaState::operator<<(const bool b) {
-	lua_pushboolean(L, (int) b);
+	lua_pushboolean(L, (int)b);
 	return *this;
 }
 
@@ -30,7 +30,7 @@ LuaState &LuaState::operator<<(const lua_Number i) {
 	return *this;
 }
 
-LuaState &LuaState::operator<<(const char *s) {
+LuaState &LuaState::operator<<(const char* s) {
 	lua_pushstring(L, s);
 	return *this;
 }
@@ -44,7 +44,7 @@ LuaState &LuaState::operator<<(const lua_CFunction &func) {
 	return *this;
 }
 
-template<RegisterWithLua T>
+template <RegisterWithLua T>
 LuaState &LuaState::operator<<(const T &registerable) {
 	registerable.registerWithLua();
 	return *this;
@@ -52,7 +52,7 @@ LuaState &LuaState::operator<<(const T &registerable) {
 
 template <typename T>
 LuaState &LuaState::operator<<(T* obj) {
-	T** userData = (T**) lua_newuserdata(L, sizeof(T*));
+	T** userData = (T**)lua_newuserdata(L, sizeof(T*));
 	*userData = obj;
 	luaL_getmetatable(L, T::className);
 	lua_setmetatable(L, -2);
@@ -60,7 +60,7 @@ LuaState &LuaState::operator<<(T* obj) {
 }
 
 template <typename T>
-LuaState &LuaState::operator<<(const std::vector<T>& arr) {
+LuaState &LuaState::operator<<(const std::vector<T> &arr) {
 	lua_newtable(L);
 	for (size_t i = 0; i < arr.size(); ++i) {
 		*this << arr[i];
@@ -70,7 +70,7 @@ LuaState &LuaState::operator<<(const std::vector<T>& arr) {
 }
 
 template <typename K, typename V>
-LuaState& LuaState::operator<<(const std::map<K, V> &mapData) {
+LuaState &LuaState::operator<<(const std::map<K, V> &mapData) {
 	lua_newtable(L);
 	for (auto &[key, value] : mapData) {
 		*this << key;
@@ -91,7 +91,7 @@ LuaState &LuaState::operator>>(bool &b) {
 }
 
 template <typename T>
-requires std::integral<T> || std::floating_point<T>
+	requires std::integral<T> || std::floating_point<T>
 LuaState &LuaState::operator>>(T &number) {
 	number = static_cast<T>(lua_tonumber(L, -1));
 	return *this >> lua_nil;
@@ -109,8 +109,8 @@ LuaState &LuaState::operator>>(std::string &str) {
 }
 
 template <class T>
-LuaState &LuaState::operator>>(T *&obj) {
-	T** userdata = (T**) lua_touserdata(L, -1);
+LuaState &LuaState::operator>>(T*&obj) {
+	T** userdata = (T**)lua_touserdata(L, -1);
 
 	if (userdata) {
 		obj = *userdata;
