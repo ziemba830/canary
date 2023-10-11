@@ -12,14 +12,24 @@
 #include "lib/logging/log_with_spd_log.hpp"
 
 std::chrono::system_clock::time_point Task::TIME_NOW = SYSTEM_TIME_ZERO;
+std::atomic_uint_fast64_t Task::LAST_EVENT_ID = 0;
 
-void Task::execute() const {
-	if (func) {
-		if (hasTraceableContext()) {
-			g_logger().trace("Executing task {}.", getContext());
-		} else {
-			g_logger().debug("Executing task {}.", getContext());
-		}
-		func();
+bool Task::execute() {
+	if (!func || hasExpired()) {
+		return false;
 	}
+
+	if (hasTraceableContext()) {
+		g_logger().trace("Executing task {}.", getContext());
+	} else {
+		g_logger().debug("Executing task {}.", getContext());
+	}
+
+	func();
+
+	if (cycle) {
+		utime = TIME_NOW + std::chrono::milliseconds(delay);
+	}
+
+	return true;
 }

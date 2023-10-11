@@ -24,8 +24,7 @@ class Dispatcher {
 public:
 	explicit Dispatcher(ThreadPool &threadPool) :
 		threadPool(threadPool) {
-		tasks.list.reserve(2000);
-		tasks.waitingList.reserve(2000);
+		threads.resize(std::thread::hardware_concurrency());
 	};
 
 	// Ensures that we don't accidentally copy it
@@ -60,6 +59,12 @@ public:
 	void stopEvent(uint64_t eventId);
 
 private:
+	static int16_t getThreadId() {
+		static std::atomic_int16_t last_id = -1;
+		thread_local static int16_t id = -1;
+		return id > -1 ? id : (id = ++last_id);
+	};
+
 	uint64_t scheduleEvent(uint32_t delay, std::function<void(void)> &&f, std::string &&context, bool cycle);
 	void waitFor(const std::shared_ptr<Task> &task) {
 		waitTime = task->getTime();
@@ -75,18 +80,21 @@ private:
 	uint_fast64_t dispatcherCycle = 0;
 	uint_fast64_t lastEventId = 0;
 
-	struct {
-		std::mutex mutexList;
-		std::mutex mutexWaitingList;
-		std::vector<Task> list;
-		std::vector<Task> waitingList;
-	} tasks;
+	std::vector<Task> eventTasks;
+	std::priority_queue<std::shared_ptr<Task>, std::deque<std::shared_ptr<Task>>, Task::Compare> scheduledtasks;
+	phmap::parallel_flat_hash_map_m<uint64_t, std::shared_ptr<Task>> scheduledtasksRef;
 
-	struct {
-		std::recursive_mutex mutex;
-		std::priority_queue<std::shared_ptr<Task>, std::deque<std::shared_ptr<Task>>, Task::Compare> list;
-		phmap::flat_hash_map<uint64_t, std::shared_ptr<Task>> map;
-	} scheduledtasks;
+	struct ThreadTask {
+		ThreadTask() {
+			tasks.reserve(2000);
+			scheduledtasks.reserve(2000);
+		}
+
+		std::vector<Task> tasks;
+		std::vector<std::shared_ptr<Task>> scheduledtasks;
+	};
+
+	std::vector<ThreadTask> threads;
 };
 
 constexpr auto g_dispatcher = Dispatcher::getInstance;

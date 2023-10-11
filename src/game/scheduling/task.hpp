@@ -66,14 +66,18 @@ public:
 		func = nullptr;
 	}
 
-	void execute() const;
+	bool execute();
 
-	void execute() {
-		func();
+	uint64_t generateId() {
+		if (eventId == 0) {
+			if (++LAST_EVENT_ID == 0) {
+				LAST_EVENT_ID = 1;
+			}
 
-		if (cycle && !canceled) {
-			utime = TIME_NOW + std::chrono::milliseconds(delay);
+			eventId = LAST_EVENT_ID;
 		}
+
+		return eventId;
 	}
 
 	struct Compare {
@@ -83,6 +87,8 @@ public:
 	};
 
 private:
+	static std::atomic_uint_fast64_t LAST_EVENT_ID;
+
 	bool hasTraceableContext() const {
 		const static auto tasksContext = phmap::flat_hash_set<std::string>({
 			"Creature::checkCreatureWalk",
