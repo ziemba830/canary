@@ -13,6 +13,8 @@
 #include "lib/thread/thread_pool.hpp"
 #include "lib/di/container.hpp"
 
+constexpr static auto ASYNC_TIME_OUT = std::chrono::seconds(15);
+
 Dispatcher &Dispatcher::getInstance() {
 	return inject<Dispatcher>();
 }
@@ -28,26 +30,19 @@ void Dispatcher::init() {
 			Task::TIME_NOW = std::chrono::system_clock::now();
 
 			// Execute all asynchronous events separately by context
-			for (auto &context : asyncEventTasks) {
-				const auto sizeEventAsync = context.size();
-				std::atomic_uint_fast64_t executedTasks = 0;
+			for (uint_fast8_t i = 0; i < static_cast<uint8_t>(AsyncEventContext::LAST); ++i) {
+				auto &asyncTasks = asyncEventTasks[i];
+				if (!asyncTasks.empty()) {
+					execute_async_events(asyncTasks);
 
-				// Execute Async Task
-				for (auto &task : context) {
-					threadPool.addLoad([&] {
-						task.execute();
-						++executedTasks;
-						task_async_signal.notify_one();
-					});
+					// Wait for all the tasks in the current context to be executed.
+					if (task_async_signal.wait_for(asyncLock, ASYNC_TIME_OUT) == std::cv_status::timeout) {
+						g_logger().warn("A timeout occurred when executing the async dispatch in the '{}' context.", i);
+					}
+
+					// Clear all async tasks
+					asyncTasks.clear();
 				}
-
-				// Wait for all the tasks in the current context to be executed.
-				task_async_signal.wait(asyncLock, [&] {
-					return executedTasks == sizeEventAsync;
-				});
-
-				// Clear all tasks
-				context.clear();
 			}
 
 			// Merge all events that were created by async events
@@ -56,7 +51,7 @@ void Dispatcher::init() {
 			execute_events();
 			execute_scheduled_events();
 
-			// Merge all events that were created by Events and Scheduled Events
+			// Merge all events that were created by events and scheduled events
 			merge_events();
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(15));
@@ -93,12 +88,28 @@ void Dispatcher::stopEvent(uint64_t eventId) {
 }
 
 void Dispatcher::execute_events() {
-	for (auto &task : eventTasks) {
+	for (const auto &task : eventTasks) {
 		if (task.execute()) {
 			++dispatcherCycle;
 		}
 	}
 	eventTasks.clear();
+}
+
+void Dispatcher::execute_async_events(const std::vector<Task> &taskList) {
+	const size_t sizeEventAsync = taskList.size();
+	std::atomic_uint_fast64_t executedTasks = 0;
+
+	// Execute Async Task
+	for (const auto &task : taskList) {
+		threadPool.addLoad([&] {
+			task.execute();
+
+			if (++executedTasks == sizeEventAsync) {
+				task_async_signal.notify_one();
+			}
+		});
+	}
 }
 
 void Dispatcher::execute_scheduled_events() {
@@ -111,6 +122,7 @@ void Dispatcher::execute_scheduled_events() {
 		task->execute();
 
 		if (!task->isCanceled() && task->isCycle()) {
+			task->updateTime();
 			scheduledtasks.emplace(task);
 		} else {
 			scheduledtasksRef.erase(task->getEventId());

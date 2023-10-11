@@ -14,7 +14,7 @@
 std::chrono::system_clock::time_point Task::TIME_NOW = SYSTEM_TIME_ZERO;
 std::atomic_uint_fast64_t Task::LAST_EVENT_ID = 0;
 
-bool Task::execute() {
+bool Task::execute() const {
 	if (!func || hasExpired()) {
 		return false;
 	}
@@ -26,10 +26,6 @@ bool Task::execute() {
 	}
 
 	func();
-
-	if (cycle) {
-		utime = TIME_NOW + std::chrono::milliseconds(delay);
-	}
 
 	return true;
 }

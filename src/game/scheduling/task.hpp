@@ -66,7 +66,11 @@ public:
 		func = nullptr;
 	}
 
-	bool execute();
+	bool execute() const;
+
+	void updateTime() {
+		utime = TIME_NOW + std::chrono::milliseconds(delay);
+	}
 
 	uint64_t generateId() {
 		if (eventId == 0) {

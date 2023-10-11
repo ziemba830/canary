@@ -39,7 +39,9 @@ public:
 	static Dispatcher &getInstance();
 
 	void init();
-	void shutdown() { }
+	void shutdown() {
+		task_async_signal.notify_all();
+	}
 
 	void addEvent(std::function<void(void)> &&f, std::string &&context, uint32_t expiresAfterMs = 0);
 	void addEvent_async(std::function<void(void)> &&f, AsyncEventContext context = AsyncEventContext::FIRST);
@@ -66,9 +68,11 @@ private:
 	};
 
 	uint64_t scheduleEvent(uint32_t delay, std::function<void(void)> &&f, std::string &&context, bool cycle);
-	void merge_events();
-	void execute_events();
-	void execute_scheduled_events();
+
+	inline void merge_events();
+	inline void execute_events();
+	inline void execute_async_events(const std::vector<Task> &taskList);
+	inline void execute_scheduled_events();
 
 	uint_fast64_t dispatcherCycle = 0;
 
