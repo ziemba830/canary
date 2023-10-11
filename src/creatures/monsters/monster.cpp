@@ -342,16 +342,19 @@ void Monster::updateTargetList() {
 	while (targetIterator != targetIDList.end()) {
 		const uint32_t targetId = *targetIterator;
 
-		auto creature = targetListMap[targetId].lock();
-		if (!creature || creature->getHealth() <= 0 || !canSee(creature->getPosition())) {
-			targetIterator = targetIDList.erase(targetIterator);
+		auto itTLM = targetListMap.find(targetId);
+		const bool existTarget = itTLM != targetListMap.end();
 
-			auto itTLM = targetListMap.find(targetId);
-			if (itTLM != targetListMap.end()) {
+		if (existTarget) {
+			const auto &creature = itTLM->second.lock();
+			if (!creature || creature->getHealth() <= 0 || !canSee(creature->getPosition())) {
+				targetIterator = targetIDList.erase(targetIterator);
 				targetListMap.erase(itTLM);
+			} else {
+				++targetIterator;
 			}
 		} else {
-			++targetIterator;
+			targetIterator = targetIDList.erase(targetIterator);
 		}
 	}
 
