@@ -34,20 +34,15 @@ public:
 	static Dispatcher &getInstance();
 
 	void init();
-	void shutdown() {
-		signal.notify_one();
-	}
+	void shutdown() { }
 
-	void addEvent(std::function<void(void)> &&f, std::string &&context, uint32_t expiresAfterMs);
-	void addEvent(std::function<void(void)> &&f, std::string &&context) {
-		addEvent(std::move(f), std::move(context), 0);
-	}
+	void addEvent(std::function<void(void)> &&f, std::string &&context, uint32_t expiresAfterMs = 0);
+	void addEvent_async(std::function<void(void)> &&f, std::string &&context);
 
 	uint64_t scheduleEvent(const std::shared_ptr<Task> &task);
 	uint64_t scheduleEvent(uint32_t delay, std::function<void(void)> &&f, std::string &&context) {
 		return scheduleEvent(delay, std::move(f), std::move(context), false);
 	}
-
 	uint64_t cycleEvent(uint32_t delay, std::function<void(void)> &&f, std::string &&context) {
 		return scheduleEvent(delay, std::move(f), std::move(context), true);
 	}
@@ -72,15 +67,13 @@ private:
 
 	ThreadPool &threadPool;
 	std::mutex mutex;
-	std::condition_variable signal;
+	std::condition_variable task_async_signal;
 	std::chrono::system_clock::time_point waitTime;
 
-	std::atomic_bool busy = false;
-
 	uint_fast64_t dispatcherCycle = 0;
-	uint_fast64_t lastEventId = 0;
 
 	std::vector<Task> eventTasks;
+	std::vector<Task> eventAsyncTasks;
 	std::priority_queue<std::shared_ptr<Task>, std::deque<std::shared_ptr<Task>>, Task::Compare> scheduledtasks;
 	phmap::parallel_flat_hash_map_m<uint64_t, std::shared_ptr<Task>> scheduledtasksRef;
 
@@ -91,6 +84,7 @@ private:
 		}
 
 		std::vector<Task> tasks;
+		std::vector<Task> asyncTasks;
 		std::vector<std::shared_ptr<Task>> scheduledtasks;
 	};
 

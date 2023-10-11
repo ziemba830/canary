@@ -21,9 +21,26 @@ void Dispatcher::init() {
 	Task::TIME_NOW = std::chrono::system_clock::now();
 
 	threadPool.addLoad([this] {
-		std::unique_lock lock(mutex);
+		std::unique_lock asyncLock(mutex);
 		while (!threadPool.getIoContext().stopped()) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			if (size_t sizeEventAsync = eventAsyncTasks.size()) {
+				std::atomic_uint_fast64_t executedTasks = 0;
+				for (auto &task : eventAsyncTasks) {
+					threadPool.addLoad([&] {
+						task.execute();
+						++executedTasks;
+						task_async_signal.notify_one();
+					});
+				}
+
+				task_async_signal.wait(asyncLock, [&] {
+					return executedTasks == sizeEventAsync;
+				});
+
+				eventAsyncTasks.clear();
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(15));
 
 			Task::TIME_NOW = std::chrono::system_clock::now();
 
@@ -65,13 +82,16 @@ void Dispatcher::init() {
 					thread.tasks.clear();
 				}
 
+				if (!thread.asyncTasks.empty()) {
+					eventAsyncTasks.insert(eventAsyncTasks.end(), make_move_iterator(thread.asyncTasks.begin()), make_move_iterator(thread.asyncTasks.end()));
+					thread.asyncTasks.clear();
+				}
+
 				if (!thread.scheduledtasks.empty()) {
 					for (auto &task : thread.scheduledtasks) {
 						scheduledtasks.emplace(task);
 						scheduledtasksRef.emplace(task->getEventId(), task);
 					}
-
-					eventTasks.insert(eventTasks.end(), make_move_iterator(thread.tasks.begin()), make_move_iterator(thread.tasks.end()));
 					thread.scheduledtasks.clear();
 				}
 			}
@@ -81,6 +101,10 @@ void Dispatcher::init() {
 
 void Dispatcher::addEvent(std::function<void(void)> &&f, std::string &&context, uint32_t expiresAfterMs) {
 	threads[getThreadId()].tasks.emplace_back(expiresAfterMs, f, context);
+}
+
+void Dispatcher::addEvent_async(std::function<void(void)> &&f, std::string &&context) {
+	threads[getThreadId()].asyncTasks.emplace_back(0, f, context);
 }
 
 uint64_t Dispatcher::scheduleEvent(const std::shared_ptr<Task> &task) {
