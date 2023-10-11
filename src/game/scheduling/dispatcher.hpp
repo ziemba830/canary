@@ -15,6 +15,11 @@
 static constexpr uint16_t DISPATCHER_TASK_EXPIRATION = 2000;
 static constexpr uint16_t SCHEDULER_MINTICKS = 50;
 
+enum class AsyncEventContext : uint8_t {
+	FIRST,
+	LAST
+};
+
 /**
  * Dispatcher allow you to dispatch a task async to be executed
  * in the dispatching thread. You can dispatch with an expiration
@@ -24,7 +29,7 @@ class Dispatcher {
 public:
 	explicit Dispatcher(ThreadPool &threadPool) :
 		threadPool(threadPool) {
-		threads.resize(std::thread::hardware_concurrency());
+		threads.resize(std::thread::hardware_concurrency() + 1);
 	};
 
 	// Ensures that we don't accidentally copy it
@@ -37,7 +42,7 @@ public:
 	void shutdown() { }
 
 	void addEvent(std::function<void(void)> &&f, std::string &&context, uint32_t expiresAfterMs = 0);
-	void addEvent_async(std::function<void(void)> &&f, std::string &&context);
+	void addEvent_async(std::function<void(void)> &&f, AsyncEventContext context = AsyncEventContext::FIRST);
 
 	uint64_t scheduleEvent(const std::shared_ptr<Task> &task);
 	uint64_t scheduleEvent(uint32_t delay, std::function<void(void)> &&f, std::string &&context) {
@@ -61,22 +66,17 @@ private:
 	};
 
 	uint64_t scheduleEvent(uint32_t delay, std::function<void(void)> &&f, std::string &&context, bool cycle);
-	void waitFor(const std::shared_ptr<Task> &task) {
-		waitTime = task->getTime();
-	}
+	void merge_events();
+	void execute_events();
+	void execute_scheduled_events();
+
+	uint_fast64_t dispatcherCycle = 0;
 
 	ThreadPool &threadPool;
 	std::mutex mutex;
 	std::condition_variable task_async_signal;
-	std::chrono::system_clock::time_point waitTime;
 
-	uint_fast64_t dispatcherCycle = 0;
-
-	std::vector<Task> eventTasks;
-	std::vector<Task> eventAsyncTasks;
-	std::priority_queue<std::shared_ptr<Task>, std::deque<std::shared_ptr<Task>>, Task::Compare> scheduledtasks;
-	phmap::parallel_flat_hash_map_m<uint64_t, std::shared_ptr<Task>> scheduledtasksRef;
-
+	// Thread Events
 	struct ThreadTask {
 		ThreadTask() {
 			tasks.reserve(2000);
@@ -84,11 +84,16 @@ private:
 		}
 
 		std::vector<Task> tasks;
-		std::vector<Task> asyncTasks;
+		std::array<std::vector<Task>, static_cast<uint8_t>(AsyncEventContext::LAST)> asyncTasks;
 		std::vector<std::shared_ptr<Task>> scheduledtasks;
 	};
-
 	std::vector<ThreadTask> threads;
+
+	// Main Events
+	std::vector<Task> eventTasks;
+	std::array<std::vector<Task>, static_cast<uint8_t>(AsyncEventContext::LAST)> asyncEventTasks;
+	std::priority_queue<std::shared_ptr<Task>, std::deque<std::shared_ptr<Task>>, Task::Compare> scheduledtasks;
+	phmap::parallel_flat_hash_map_m<uint64_t, std::shared_ptr<Task>> scheduledtasksRef;
 };
 
 constexpr auto g_dispatcher = Dispatcher::getInstance;
