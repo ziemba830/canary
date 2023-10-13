@@ -14,6 +14,7 @@
 #include "game/game.hpp"
 #include "items/item.hpp"
 #include "items/decay/decay.hpp"
+#include "game/scheduling/save_manager.hpp"
 
 class Imbuement;
 
@@ -908,5 +909,109 @@ int ItemFunctions::luaItemCanReceiveAutoCarpet(lua_State* L) {
 	}
 
 	pushBoolean(L, item->canReceiveAutoCarpet());
+	return 1;
+}
+
+int ItemFunctions::luaItemSetOwner(lua_State* L) {
+	// item:setOwner(creature|creatureId)
+	std::shared_ptr<Item> item = getUserdataShared<Item>(L, 1);
+	if (!item) {
+		reportErrorFunc(getErrorDesc(LUA_ERROR_ITEM_NOT_FOUND));
+		return 0;
+	}
+
+	if (isUserdata(L, 2)) {
+		std::shared_ptr<Creature> creature = getUserdataShared<Creature>(L, 2);
+		if (!creature) {
+			reportErrorFunc(getErrorDesc(LUA_ERROR_PLAYER_NOT_FOUND));
+			return 0;
+		}
+		item->setOwner(creature);
+		pushBoolean(L, true);
+		return 1;
+	}
+
+	auto creatureId = getNumber<uint32_t>(L, 2);
+	if (creatureId != 0) {
+		item->setOwner(creatureId);
+		pushBoolean(L, true);
+		return 1;
+	}
+
+	pushBoolean(L, false);
+	return 1;
+}
+
+int ItemFunctions::luaItemGetOwnerId(lua_State* L) {
+	// item:getOwner()
+	std::shared_ptr<Item> item = getUserdataShared<Item>(L, 1);
+	if (!item) {
+		reportErrorFunc(getErrorDesc(LUA_ERROR_ITEM_NOT_FOUND));
+		return 0;
+	}
+
+	if (auto ownerId = item->getOwnerId()) {
+		lua_pushnumber(L, ownerId);
+		return 1;
+	}
+
+	lua_pushnil(L);
+	return 1;
+}
+
+int ItemFunctions::luaItemIsOwner(lua_State* L) {
+	// item:isOwner(creature|creatureId)
+	std::shared_ptr<Item> item = getUserdataShared<Item>(L, 1);
+	if (!item) {
+		reportErrorFunc(getErrorDesc(LUA_ERROR_ITEM_NOT_FOUND));
+		return 0;
+	}
+
+	if (isUserdata(L, 2)) {
+		std::shared_ptr<Creature> creature = getUserdataShared<Creature>(L, 2);
+		if (!creature) {
+			reportErrorFunc(getErrorDesc(LUA_ERROR_PLAYER_NOT_FOUND));
+			return 0;
+		}
+		pushBoolean(L, item->isOwner(creature));
+		return 1;
+	}
+
+	auto creatureId = getNumber<uint32_t>(L, 2);
+	if (creatureId != 0) {
+		pushBoolean(L, item->isOwner(creatureId));
+		return 1;
+	}
+
+	pushBoolean(L, false);
+	return 1;
+}
+
+int ItemFunctions::luaItemGetOwnerName(lua_State* L) {
+	// item:getOwnerName()
+	std::shared_ptr<Item> item = getUserdataShared<Item>(L, 1);
+	if (!item) {
+		reportErrorFunc(getErrorDesc(LUA_ERROR_ITEM_NOT_FOUND));
+		return 0;
+	}
+
+	if (auto ownerName = item->getOwnerName(); !ownerName.empty()) {
+		pushString(L, ownerName);
+		return 1;
+	}
+
+	lua_pushnil(L);
+	return 1;
+}
+
+int ItemFunctions::luaItemHasOwner(lua_State* L) {
+	// item:hasOwner()
+	std::shared_ptr<Item> item = getUserdataShared<Item>(L, 1);
+	if (!item) {
+		reportErrorFunc(getErrorDesc(LUA_ERROR_ITEM_NOT_FOUND));
+		return 1;
+	}
+
+	pushBoolean(L, item->hasOwner());
 	return 1;
 }

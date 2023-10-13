@@ -114,18 +114,30 @@ bool Database::retryQuery(const std::string_view &query, int retries) {
 }
 
 bool Database::executeQuery(const std::string_view &query) {
+	Benchmark bm_executeQuery;
 	if (!handle) {
 		g_logger().error("Database not initialized!");
 		return false;
 	}
 
 	g_logger().trace("Executing Query: {}", query);
+	auto queryPrefix = query.substr(0, 50);
 
 	std::scoped_lock lock { databaseLock };
+	auto lockWait = bm_executeQuery.duration();
+	if (lockWait > 10) {
+		g_logger().warn("Lock wait for query {} took {} ms", queryPrefix, lockWait);
+	}
+
+	bm_executeQuery.start();
 
 	bool success = retryQuery(query, 10);
-
 	mysql_free_result(mysql_store_result(handle));
+
+	auto duration = bm_executeQuery.duration();
+	if (duration > 10) {
+		g_logger().warn("Query {} executed in {} ms", queryPrefix, duration);
+	}
 	return success;
 }
 

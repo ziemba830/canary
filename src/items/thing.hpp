@@ -16,6 +16,7 @@ class Cylinder;
 class Item;
 class Creature;
 class Container;
+class Player;
 
 class Thing {
 public:
@@ -35,7 +36,7 @@ public:
 		return getParent();
 	}
 
-	virtual void setParent(std::weak_ptr<Cylinder>) {
+	virtual void setParent(std::shared_ptr<Cylinder>) {
 		//
 	}
 
@@ -47,6 +48,9 @@ public:
 	virtual int32_t getThrowRange() const = 0;
 	virtual bool isPushable() = 0;
 
+	virtual std::shared_ptr<Player> getPlayer() {
+		return nullptr;
+	}
 	virtual std::shared_ptr<Container> getContainer() {
 		return nullptr;
 	}
@@ -63,6 +67,9 @@ public:
 		return nullptr;
 	}
 	virtual std::shared_ptr<Creature> getCreature() const {
+		return nullptr;
+	}
+	virtual std::shared_ptr<Cylinder> getCylinder() {
 		return nullptr;
 	}
 

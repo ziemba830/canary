@@ -58,7 +58,7 @@ std::shared_ptr<Container> Container::create(std::shared_ptr<Tile> tile) {
 Container::~Container() {
 	if (getID() == ITEM_BROWSEFIELD) {
 		for (std::shared_ptr<Item> item : itemlist) {
-			item->setParent(m_parent);
+			item->setParent(getParent());
 		}
 	}
 }
@@ -427,6 +427,18 @@ ReturnValue Container::queryAdd(int32_t addIndex, const std::shared_ptr<Thing> &
 	if (item == getItem()) {
 		return RETURNVALUE_THISISIMPOSSIBLE;
 	}
+	if (item->hasOwner()) {
+		// a non-owner can move the item around but not pick it up
+		auto toPlayer = getTopParent()->getPlayer();
+		if (toPlayer && !item->isOwner(toPlayer)) {
+			return RETURNVALUE_ITEMISNOTYOURS;
+		}
+
+		// a container cannot have items of different owners
+		if (hasOwner() && getOwnerId() != item->getOwnerId()) {
+			return RETURNVALUE_ITEMISNOTYOURS;
+		}
+	}
 
 	std::shared_ptr<Cylinder> cylinder = getParent();
 	auto noLimit = hasBitSet(FLAG_NOLIMIT, flags);
@@ -450,8 +462,8 @@ ReturnValue Container::queryAdd(int32_t addIndex, const std::shared_ptr<Thing> &
 		return RETURNVALUE_CONTAINERNOTENOUGHROOM;
 	}
 
-	if (std::shared_ptr<Container> topParentContainer = getTopParentContainer()) {
-		if (std::shared_ptr<Container> addContainer = item->getContainer()) {
+	if (const auto topParentContainer = getTopParentContainer()) {
+		if (const auto addContainer = item->getContainer()) {
 			uint32_t addContainerCount = addContainer->getContainerHoldingCount() + 1;
 			uint32_t maxContainer = static_cast<uint32_t>(g_configManager().getNumber(MAX_CONTAINER));
 			if (addContainerCount + topParentContainer->getContainerHoldingCount() > maxContainer) {
@@ -462,10 +474,10 @@ ReturnValue Container::queryAdd(int32_t addIndex, const std::shared_ptr<Thing> &
 			if (addItemCount + topParentContainer->getItemHoldingCount() > m_maxItems) {
 				return RETURNVALUE_CONTAINERISFULL;
 			}
-		}
-
-		if (topParentContainer->getItemHoldingCount() + 1 > m_maxItems) {
-			return RETURNVALUE_CONTAINERISFULL;
+		} else {
+			if (topParentContainer->getItemHoldingCount() + 1 > m_maxItems) {
+				return RETURNVALUE_CONTAINERISFULL;
+			}
 		}
 	}
 
@@ -926,4 +938,18 @@ void ContainerIterator::advance() {
 			cur = over.front()->itemlist.begin();
 		}
 	}
+}
+
+uint32_t Container::getOwnerId() const {
+	uint32_t ownerId = Item::getOwnerId();
+	if (ownerId > 0) {
+		return ownerId;
+	}
+	for (const auto &item : itemlist) {
+		ownerId = item->getOwnerId();
+		if (ownerId > 0) {
+			return ownerId;
+		}
+	}
+	return 0;
 }

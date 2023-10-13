@@ -266,6 +266,26 @@ public:
 		return isLootTrackeable;
 	}
 
+	void setOwner(uint32_t owner) {
+		setAttribute(ItemAttribute_t::OWNER, owner);
+	}
+
+	void setOwner(std::shared_ptr<Creature> owner);
+
+	virtual uint32_t getOwnerId() const;
+
+	bool isOwner(uint32_t ownerId) {
+		return getOwnerId() == ownerId;
+	}
+
+	std::string getOwnerName();
+
+	bool isOwner(std::shared_ptr<Creature> owner);
+
+	bool hasOwner() const {
+		return getOwnerId() != 0;
+	}
+
 	static std::string parseImbuementDescription(std::shared_ptr<Item> item);
 	static std::string parseShowDurationSpeed(int32_t speed, bool &begin);
 	static std::string parseShowDuration(std::shared_ptr<Item> item);
@@ -566,7 +586,7 @@ public:
 	std::shared_ptr<Cylinder> getParent() override {
 		return m_parent.lock();
 	}
-	void setParent(std::weak_ptr<Cylinder> cylinder) override {
+	void setParent(std::shared_ptr<Cylinder> cylinder) override {
 		m_parent = cylinder;
 	}
 	void resetParent() {

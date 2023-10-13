@@ -55,6 +55,10 @@ public:
 		return static_self_cast<Container>();
 	}
 
+	std::shared_ptr<Cylinder> getCylinder() override final {
+		return getContainer();
+	}
+
 	std::shared_ptr<Container> getRootContainer();
 
 	virtual std::shared_ptr<DepotLocker> getDepotLocker() {
@@ -160,6 +164,8 @@ public:
 	void stopDecaying() override;
 
 	virtual void removeItem(std::shared_ptr<Thing> thing, bool sendUpdateToClient = false);
+
+	uint32_t getOwnerId() const override final;
 
 protected:
 	std::ostringstream &getContentDescription(std::ostringstream &os, bool oldProtocol);

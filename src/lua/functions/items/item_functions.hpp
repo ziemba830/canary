@@ -58,6 +58,12 @@ public:
 		registerMethod(L, "Item", "setCustomAttribute", ItemFunctions::luaItemSetCustomAttribute);
 		registerMethod(L, "Item", "removeCustomAttribute", ItemFunctions::luaItemRemoveCustomAttribute);
 
+		registerMethod(L, "Item", "setOwner", ItemFunctions::luaItemSetOwner);
+		registerMethod(L, "Item", "getOwnerId", ItemFunctions::luaItemGetOwnerId);
+		registerMethod(L, "Item", "isOwner", ItemFunctions::luaItemIsOwner);
+		registerMethod(L, "Item", "getOwnerName", ItemFunctions::luaItemGetOwnerName);
+		registerMethod(L, "Item", "hasOwner", ItemFunctions::luaItemHasOwner);
+
 		registerMethod(L, "Item", "moveTo", ItemFunctions::luaItemMoveTo);
 		registerMethod(L, "Item", "transform", ItemFunctions::luaItemTransform);
 		registerMethod(L, "Item", "decay", ItemFunctions::luaItemDecay);
@@ -153,4 +159,10 @@ private:
 	static int luaItemGetClassification(lua_State* L);
 
 	static int luaItemCanReceiveAutoCarpet(lua_State* L);
+
+	static int luaItemSetOwner(lua_State* L);
+	static int luaItemGetOwnerId(lua_State* L);
+	static int luaItemIsOwner(lua_State* L);
+	static int luaItemGetOwnerName(lua_State* L);
+	static int luaItemHasOwner(lua_State* L);
 };

@@ -32,6 +32,10 @@ bool Tile::hasProperty(ItemProperty prop) const {
 
 	if (const TileItemVector* items = getItemList()) {
 		for (auto &item : *items) {
+			if (!item) {
+				g_logger().error("Tile::hasProperty: tile {} has an item which is nullptr", tilePos.toString());
+				continue;
+			}
 			if (item->hasProperty(prop)) {
 				return true;
 			}
@@ -49,6 +53,10 @@ bool Tile::hasProperty(std::shared_ptr<Item> exclude, ItemProperty prop) const {
 
 	if (const TileItemVector* items = getItemList()) {
 		for (auto &item : *items) {
+			if (!item) {
+				g_logger().error("Tile::hasProperty: tile {} has an item which is nullptr", tilePos.toString());
+				continue;
+			}
 			if (item != exclude && item->hasProperty(prop)) {
 				return true;
 			}
@@ -461,7 +469,7 @@ void Tile::onRemoveTileItem(const CreatureVector &spectators, const std::vector<
 			}
 		}
 	}
-	for (const auto zone : getZones()) {
+	for (auto &zone : getZones()) {
 		zone->itemRemoved(item);
 	}
 
@@ -820,7 +828,7 @@ ReturnValue Tile::queryRemove(const std::shared_ptr<Thing> &thing, uint32_t coun
 	return RETURNVALUE_NOERROR;
 }
 
-std::shared_ptr<Cylinder> Tile::queryDestination(int32_t &, const std::shared_ptr<Thing> &, std::shared_ptr<Item>* destItem, uint32_t &tileFlags) {
+std::shared_ptr<Cylinder> Tile::queryDestination(int32_t &, const std::shared_ptr<Thing> &thing, std::shared_ptr<Item>* destItem, uint32_t &tileFlags) {
 	std::shared_ptr<Tile> destTile = nullptr;
 	*destItem = nullptr;
 
@@ -911,6 +919,12 @@ std::shared_ptr<Cylinder> Tile::queryDestination(int32_t &, const std::shared_pt
 		std::shared_ptr<Thing> destThing = destTile->getTopDownItem();
 		if (destThing) {
 			*destItem = destThing->getItem();
+			if (thing->getItem()) {
+				auto destCylinder = destThing->getCylinder();
+				if (destCylinder && !destCylinder->getContainer()) {
+					return destThing->getCylinder();
+				}
+			}
 		}
 	}
 	return destTile;
@@ -1525,7 +1539,7 @@ void Tile::internalAddThing(uint32_t, std::shared_ptr<Thing> thing) {
 		zone->thingAdded(thing);
 	}
 
-	thing->setParent(static_self_cast<Tile>());
+	thing->setParent(getTile());
 
 	std::shared_ptr<Creature> creature = thing->getCreature();
 	if (creature) {
@@ -1732,6 +1746,47 @@ std::shared_ptr<Item> Tile::getDoorItem() const {
 	return nullptr;
 }
 
-const phmap::parallel_flat_hash_set<std::shared_ptr<Zone>> Tile::getZones() {
-	return Zone::getZones(getPosition());
+phmap::flat_hash_set<std::shared_ptr<Zone>> Tile::getZones() {
+	return zones;
+}
+
+void Tile::addZone(std::shared_ptr<Zone> zone) {
+	zones.insert(zone);
+	const auto &items = getItemList();
+	if (items) {
+		for (const auto &item : *items) {
+			zone->itemAdded(item);
+		}
+	}
+	const auto &creatures = getCreatures();
+	if (creatures) {
+		for (const auto &creature : *creatures) {
+			zone->creatureAdded(creature);
+		}
+	}
+}
+
+void Tile::clearZones() {
+	phmap::flat_hash_set<std::shared_ptr<Zone>> zonesToRemove;
+	for (const auto &zone : zones) {
+		if (zone->isStatic()) {
+			continue;
+		}
+		zonesToRemove.insert(zone);
+		const auto &items = getItemList();
+		if (items) {
+			for (const auto &item : *items) {
+				zone->itemRemoved(item);
+			}
+		}
+		const auto &creatures = getCreatures();
+		if (creatures) {
+			for (const auto &creature : *creatures) {
+				zone->creatureRemoved(creature);
+			}
+		}
+	}
+	for (const auto &zone : zonesToRemove) {
+		zones.erase(zone);
+	}
 }

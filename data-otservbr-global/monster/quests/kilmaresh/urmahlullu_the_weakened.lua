@@ -110,7 +110,6 @@ monster.loot = {
 	{ name = "golden bijou", chance = 580 },
 	{ name = "winged backpack", chance = 250 },
 	{ name = "rainbow necklace", chance = 1160 },
-	{ id = 30403, chance = 160 }, -- enchanted theurgic amulet
 	{ name = "sun medal", chance = 160 },
 	{ name = "sunray emblem", chance = 160 },
 }

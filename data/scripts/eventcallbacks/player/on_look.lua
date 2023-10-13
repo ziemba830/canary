@@ -16,6 +16,10 @@ function callback.playerOnLook(player, thing, position, distance)
 		else
 			description = description .. thing:getDescription(distance)
 		end
+		local ownerName = thing:getOwnerName()
+		if ownerName then
+			description = string.format("%s\nIt belongs to %s.", description, ownerName)
+		end
 	else
 		description = description .. thing:getDescription(distance)
 		if thing:isMonster() then
@@ -62,7 +66,7 @@ function callback.playerOnLook(player, thing, position, distance)
 			description = string.format(str, description, thing:getHealth(), thing:getMaxHealth()) .. "."
 		end
 
-		description = string.format("%s\nPosition: %d, %d, %d", description, position.x, position.y, position.z)
+		description = string.format("%s\nPosition: (%d, %d, %d)", description, position.x, position.y, position.z)
 
 		if thing:isCreature() then
 			local speedBase = thing:getBaseSpeed()

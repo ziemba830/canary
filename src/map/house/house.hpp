@@ -224,6 +224,7 @@ public:
 	}
 
 	bool transferToDepot(std::shared_ptr<Player> player) const;
+	bool transferToDepot(std::shared_ptr<Player> player, std::shared_ptr<HouseTile> tile) const;
 
 	bool hasItemOnTile() const;
 	bool hasNewOwnership() const;

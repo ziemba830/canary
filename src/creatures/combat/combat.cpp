@@ -14,6 +14,7 @@
 #include "lua/creature/events.hpp"
 #include "creatures/players/wheel/player_wheel.hpp"
 #include "game/game.hpp"
+#include "game/scheduling/dispatcher.hpp"
 #include "io/iobestiary.hpp"
 #include "creatures/monsters/monster.hpp"
 #include "creatures/monsters/monsters.hpp"
@@ -820,7 +821,7 @@ void Combat::combatTileEffects(const CreatureVector &spectators, std::shared_ptr
 
 		std::shared_ptr<Item> item = Item::CreateItem(itemId);
 		if (caster) {
-			item->setAttribute(ItemAttribute_t::OWNER, caster->getID());
+			item->setOwner(caster);
 		}
 
 		ReturnValue ret = g_game().internalAddItem(tile, item);
@@ -930,15 +931,26 @@ bool Combat::doCombatChain(std::shared_ptr<Creature> caster, std::shared_ptr<Cre
 		return false;
 	}
 
+	auto affected = targets.size();
+	int i = 0;
 	for (const auto &[from, toVector] : targets) {
 		auto combat = this;
+		auto delay = i * 100;
+		++i;
 		for (auto to : toVector) {
 			auto nextTarget = g_game().getCreatureByID(to);
 			if (!nextTarget) {
 				continue;
 			}
-			combat->doChainEffect(from, nextTarget->getPosition(), combat->params.chainEffect);
-			combat->doCombat(caster, nextTarget, from);
+			g_dispatcher().scheduleEvent(
+				delay, [combat, caster, nextTarget, from, affected]() {
+					if (combat && caster && nextTarget) {
+						combat->doChainEffect(from, nextTarget->getPosition(), combat->params.chainEffect);
+						combat->doCombat(caster, nextTarget, from, affected);
+					}
+				},
+				"Combat::doCombatChain"
+			);
 		}
 	}
 
@@ -953,10 +965,11 @@ bool Combat::doCombat(std::shared_ptr<Creature> caster, std::shared_ptr<Creature
 	return doCombat(caster, target, caster != nullptr ? caster->getPosition() : Position());
 }
 
-bool Combat::doCombat(std::shared_ptr<Creature> caster, std::shared_ptr<Creature> target, const Position &origin) const {
+bool Combat::doCombat(std::shared_ptr<Creature> caster, std::shared_ptr<Creature> target, const Position &origin, int affected /* = 1 */) const {
 	// target combat callback function
 	if (params.combatType != COMBAT_NONE) {
 		CombatDamage damage = getCombatDamage(caster, target);
+		damage.affected = affected;
 		if (damage.primary.type != COMBAT_MANADRAIN) {
 			doCombatHealth(caster, target, origin, damage, params);
 		} else {
@@ -1979,7 +1992,7 @@ void MagicField::onStepInField(const std::shared_ptr<Creature> &creature) {
 	const ItemType &it = items[getID()];
 	if (it.conditionDamage) {
 		auto conditionCopy = it.conditionDamage->clone();
-		auto ownerId = getAttribute<uint32_t>(ItemAttribute_t::OWNER);
+		auto ownerId = getOwnerId();
 		if (ownerId) {
 			bool harmfulField = true;
 			auto itemTile = getTile();

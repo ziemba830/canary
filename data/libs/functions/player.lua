@@ -203,7 +203,15 @@ function Player.transferMoneyTo(self, target, amount)
 	if not target then
 		return false
 	end
-	return Bank.transfer(self, target, amount)
+	if not Bank.transfer(self, target, amount) then
+		return false
+	end
+
+	local targetPlayer = Player(target)
+	if targetPlayer then
+		targetPlayer:sendTextMessage(MESSAGE_LOOK, self:getName() .. " has transferred " .. FormatNumber(amount) .. " gold coins to you.")
+	end
+	return true
 end
 
 function Player.withdrawMoney(self, amount)
@@ -550,26 +558,24 @@ function Player.updateHazard(self)
 	return true
 end
 
-function Player:addItemStoreInbox(itemId, amount, moveable)
+function Player:addItemStoreInboxEx(item, moveable, setOwner)
 	local inbox = self:getSlotItem(CONST_SLOT_STORE_INBOX)
 	if not moveable then
-		for _, item in pairs(inbox:getItems()) do
-			if item:getId() == itemId then
-				item:removeAttribute(ITEM_ATTRIBUTE_STORE)
-			end
-		end
+		item:setOwner(self)
+		item:setAttribute(ITEM_ATTRIBUTE_STORE, systemTime())
+	elseif setOwner then
+		item:setOwner(self)
 	end
+	inbox:addItemEx(item, INDEX_WHEREEVER, FLAG_NOLIMIT)
+	return item
+end
 
-	local newItem = inbox:addItem(itemId, amount, INDEX_WHEREEVER, FLAG_NOLIMIT)
-
-	if not moveable then
-		for _, item in pairs(inbox:getItems()) do
-			if item:getId() == itemId then
-				item:setAttribute(ITEM_ATTRIBUTE_STORE, systemTime())
-			end
-		end
+function Player:addItemStoreInbox(itemId, amount, moveable, setOwner)
+	local item = Game.createItem(itemId, amount)
+	if not item then
+		return nil
 	end
-	return newItem
+	return self:addItemStoreInboxEx(item, moveable, setOwner)
 end
 
 ---@param monster Monster
@@ -646,4 +652,28 @@ function Player:setFiendish()
 		monster:setFiendish(position, self)
 	end
 	return false
+end
+
+function Player:findItemInInbox(itemId, name)
+	local inbox = self:getSlotItem(CONST_SLOT_STORE_INBOX)
+	local items = inbox:getItems()
+	for _, item in pairs(items) do
+		if item:getId() == itemId and (not name or item:getName() == name) then
+			return item
+		end
+	end
+	return nil
+end
+
+function Player:sendColoredMessage(message)
+	local grey = 3003
+	local blue = 3043
+	local green = 3415
+	local purple = 36792
+	local yellow = 34021
+
+	logger.info("Message: {}", message)
+	local msg = message:gsub("{grey|", "{" .. grey .. "|"):gsub("{blue|", "{" .. blue .. "|"):gsub("{green|", "{" .. green .. "|"):gsub("{purple|", "{" .. purple .. "|"):gsub("{yellow|", "{" .. yellow .. "|")
+	logger.info("Message: {}", msg)
+	return self:sendTextMessage(MESSAGE_LOOT, msg)
 end

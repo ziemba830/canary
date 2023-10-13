@@ -78,25 +78,26 @@ monster.voices = {
 }
 
 monster.loot = {
-	{ id = 3007, chance = 410 }, -- crystal ring
-	{ name = "gold coin", chance = 30000, maxCount = 100 },
-	{ name = "gold coin", chance = 30000, maxCount = 100 },
-	{ name = "gold coin", chance = 38000, maxCount = 69 },
-	{ name = "platinum coin", chance = 2800, maxCount = 4 },
+	{ id = 3007, chance = 430 }, -- crystal ring
+	{ name = "gold coin", chance = 98000, maxCount = 274 },
+	{ name = "platinum coin", chance = 2300, maxCount = 4 },
 	{ name = "terra rod", chance = 20000 },
-	{ name = "golden legs", chance = 130 },
-	{ name = "steel boots", chance = 790 },
-	{ name = "orichalcum pearl", chance = 1500, maxCount = 4 },
+	{ name = "golden legs", chance = 50 },
+	{ name = "steel boots", chance = 550 },
+	{ name = "orichalcum pearl", chance = 1440, maxCount = 4 },
 	{ name = "red piece of cloth", chance = 4000 },
-	{ name = "soul orb", chance = 21500 },
-	{ name = "soul orb", chance = 50 },
-	{ id = 6300, chance = 60 }, -- death ring
-	{ name = "demonic essence", chance = 22500 },
-	{ name = "flask of demonic blood", chance = 35000, maxCount = 3 },
-	{ name = "assassin dagger", chance = 660 },
-	{ name = "noble axe", chance = 2000 },
+	{ name = "soul orb", chance = 19450 },
+	{ id = 6300, chance = 50 }, -- death ring
+	{ name = "demonic essence", chance = 22400 },
+	{ name = "flask of demonic blood", chance = 34000, maxCount = 3 },
+	{ name = "assassin dagger", chance = 900 },
+	{ name = "noble axe", chance = 1870 },
 	{ name = "great health potion", chance = 10500 },
 	{ name = "jalapeno pepper", chance = 29280, maxCount = 4 },
+	{ id = 8899, chance = 10130 }, -- slightly rusted legs
+	{ id = 3033, chance = 7740, maxCount = 3 }, -- small amethyst
+	{ id = 3007, chance = 430 }, -- crystal ring
+	{ id = 7368, chance = 180, maxCount = 1 }, -- assassin star
 }
 
 monster.attacks = {

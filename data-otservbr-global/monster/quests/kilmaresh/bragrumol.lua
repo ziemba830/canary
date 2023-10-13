@@ -68,24 +68,25 @@ monster.voices = {
 }
 
 monster.loot = {
-	{ name = "platinum coin", chance = 100000, maxCount = 8 },
+	{ name = "platinum coin", chance = 100000, maxCount = 9 },
 	{ name = "flaming arrow", chance = 60000, maxCount = 15 },
-	{ id = 3039, chance = 45000, maxCount = 15 }, -- red gem
+	{ id = 3039, chance = 81250 }, -- red gem
 	{ name = "sea horse figurine", chance = 6700 },
-	{ id = 31557, chance = 520 }, -- blister ring
-	{ id = 31369, chance = 16500 }, -- gryphon mask
-	{ name = "winged boots", chance = 110 },
+	{ name = "golden mask", chance = 12500 },
+	{ id = 31557, chance = 250 }, -- blister ring
+	{ name = "winged boots", chance = 750 },
 	{ id = 30403, chance = 250 }, -- enchanted theurgic amulet
-	{ name = "magma coat", chance = 48000 },
-	{ name = "stone skin amulet", chance = 54000 },
+	{ name = "magma coat", chance = 5000 },
+	{ name = "stone skin amulet", chance = 10000 },
+	{ id = 281, chance = 28000 }, -- giant shimmering pearl (green)
 }
 
 monster.attacks = {
 	{ name = "melee", interval = 2000, chance = 100, minDamage = 0, maxDamage = -600 },
-	{ name = "combat", interval = 2000, chance = 18, type = COMBAT_DEATHDAMAGE, minDamage = -300, maxDamage = -600, range = 5, shootEffect = CONST_ANI_SUDDENDEATH, target = false },
-	{ name = "combat", interval = 2000, chance = 22, type = COMBAT_DEATHDAMAGE, minDamage = -300, maxDamage = -600, range = 5, radius = 4, effect = CONST_ME_MORTAREA, target = false },
-	{ name = "combat", interval = 2000, chance = 20, type = COMBAT_FIREDAMAGE, minDamage = -300, maxDamage = -600, range = 5, radius = 4, shootEffect = CONST_ANI_FIRE, effect = CONST_ME_FIREAREA, target = true },
-	{ name = "combat", interval = 2000, chance = 12, type = COMBAT_DEATHDAMAGE, minDamage = -300, maxDamage = -600, range = 5, length = 5, spread = 3, effect = CONST_ME_WHITE_ENERGY_SPARK, target = true },
+	{ name = "combat", interval = 2700, chance = 20, type = COMBAT_DEATHDAMAGE, minDamage = -300, maxDamage = -600, range = 1, shootEffect = CONST_ANI_SUDDENDEATH, target = false },
+	{ name = "combat", interval = 3100, chance = 25, type = COMBAT_DEATHDAMAGE, minDamage = -300, maxDamage = -600, radius = 4, effect = CONST_ME_MORTAREA, target = false },
+	{ name = "combat", interval = 3700, chance = 30, type = COMBAT_FIREDAMAGE, minDamage = -300, maxDamage = -600, range = 5, radius = 4, shootEffect = CONST_ANI_FIRE, effect = CONST_ME_FIREAREA, target = true },
+	{ name = "energy chain", interval = 4300, chance = 40, minDamage = -350, maxDamage = -575, range = 3, target = true },
 }
 
 monster.defenses = {

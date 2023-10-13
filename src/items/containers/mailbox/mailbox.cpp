@@ -12,6 +12,7 @@
 #include "items/containers/mailbox/mailbox.hpp"
 #include "game/game.hpp"
 #include "io/iologindata.hpp"
+#include "game/scheduling/save_manager.hpp"
 #include "map/spectators.hpp"
 
 ReturnValue Mailbox::queryAdd(int32_t, const std::shared_ptr<Thing> &thing, uint32_t, uint32_t, std::shared_ptr<Creature>) {
@@ -107,7 +108,7 @@ bool Mailbox::sendItem(std::shared_ptr<Item> item) const {
 			if (player->isOnline()) {
 				player->onReceiveMail();
 			} else {
-				IOLoginData::savePlayer(player);
+				g_saveManager().savePlayer(player);
 			}
 			return true;
 		}
@@ -137,5 +138,5 @@ bool Mailbox::getReceiver(std::shared_ptr<Item> item, std::string &name) const {
 }
 
 bool Mailbox::canSend(std::shared_ptr<Item> item) {
-	return item->getID() == ITEM_PARCEL || item->getID() == ITEM_LETTER;
+	return !item->hasOwner() && (item->getID() == ITEM_PARCEL || item->getID() == ITEM_LETTER);
 }
