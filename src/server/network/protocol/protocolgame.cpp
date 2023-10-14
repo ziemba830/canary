@@ -8532,3 +8532,195 @@ void ProtocolGame::parseSaveWheel(NetworkMessage &msg) {
 
 	addGameTask(&Game::playerSaveWheel, player->getID(), msg);
 }
+
+void ProtocolGame::sendRelogCancel(const std::string& msg, bool isRelog)
+{
+	if (isRelog) {
+		disconnectClient(msg);
+		return;
+	}
+
+	player->sendCancelMessage(msg);
+}
+
+void ProtocolGame::fastRelog(const std::string& otherPlayerName)
+{
+	// Verificar se o jogador está ativo
+	if (!player || player->isRemoved()) {
+		return;
+	}
+
+	// Obter o sistema operacional do jogador
+	OperatingSystem_t operatingSystem = player->getOperatingSystem();
+
+	// Ler informações do jogador solicitado
+	bool isRelog = false;
+	auto otherPlayer = g_game().getPlayerByName(otherPlayerName);
+
+	if (otherPlayer) {
+		if (otherPlayer->isRemoved()) {
+			player->sendCancelMessage("Ocorreu um erro. Por favor, tente novamente mais tarde.");
+			return;
+		}
+
+		// Lidar com a situação de relogin para o mesmo personagem
+		if (player->getID() == otherPlayer->getID()) {
+			// Enviar efeito de logout
+			if (!player->isInGhostMode()) {
+				g_game().addMagicEffect(player->getPosition(), CONST_ME_POFF);
+			}
+
+			// Desvincular o cliente do jogador
+			player->client = nullptr;
+
+			// Logout do jogador atual
+			g_game().removeCreature(player);
+			otherPlayer = nullptr;
+			isRelog = true;
+		}
+	}
+
+	// Lidar com a situação de login
+	bool isLogin = !otherPlayer;
+	if (isLogin) {
+		otherPlayer = std::make_shared<Player>(nullptr);
+		otherPlayer->setName(otherPlayerName);
+		otherPlayer->setID();
+
+		if (isRelog) {
+			// Usar um novo objeto em vez do removido
+			this->player = otherPlayer;
+			otherPlayer->client = getThis();
+		}
+
+		// Carregar informações básicas do jogador do banco de dados
+		if (!IOLoginDataLoad::preLoadPlayer(otherPlayer, otherPlayerName)) {
+			sendRelogCancel("Seu personagem não pôde ser carregado.", isRelog);
+			return;
+		}
+
+		// Verificar se o nome está bloqueado
+		if (IOBan::isPlayerNamelocked(otherPlayer->getGUID())) {
+			sendRelogCancel("Seu personagem está com o nome bloqueado.", isRelog);
+			return;
+		}
+
+		// Verificar se o servidor está fechado
+		if (!otherPlayer->hasFlag(PlayerFlags_t::CanAlwaysLogin)) {
+			GameState_t gameState = g_game().getGameState();
+			if (gameState == GAME_STATE_CLOSING) {
+				sendRelogCancel("O servidor está prestes a ser desligado. Por favor, tente novamente mais tarde.", isRelog);
+				return;
+			} else if (gameState == GAME_STATE_CLOSED) {
+				sendRelogCancel("O servidor está atualmente fechado. Por favor, tente novamente mais tarde.", isRelog);
+				return;
+			}
+		}
+
+		// Desconectar se o jogador estiver banido
+		if (!otherPlayer->hasFlag(PlayerFlags_t::CannotBeBanned)) {
+			BanInfo banInfo;
+			if (IOBan::isAccountBanned(otherPlayer->getAccountId(), banInfo)) {
+				if (banInfo.reason.empty()) {
+					banInfo.reason = "(nenhum)";
+				}
+
+				if (banInfo.expiresAt > 0) {
+					disconnectClient(fmt::format("Sua conta foi banida até {:s} por {:s}.\n\nMotivo especificado:\n{:s}", formatDateShort(banInfo.expiresAt), banInfo.bannedBy, banInfo.reason));
+				} else {
+					disconnectClient(fmt::format("Sua conta foi permanentemente banida por {:s}.\n\nMotivo especificado:\n{:s}", banInfo.bannedBy, banInfo.reason));
+				}
+
+				if (!isRelog) {
+					// Enviar efeito de logout
+					if (!player->isInGhostMode()) {
+						g_game().addMagicEffect(player->getPosition(), CONST_ME_POFF);
+					}
+
+					g_game().removeCreature(player);
+				}
+				return;
+			}
+		}
+	}
+
+	// Lidar com a situação de relogin do mesmo personagem
+	bool sameClient = otherPlayer->client && (otherPlayer->client == getThis());
+	if (!sameClient) {
+		// Conectado de outro local - verificar o valor de configuração
+		if (!g_configManager().getBoolean(REPLACE_KICK_ON_LOGIN)) {
+			player->sendCancelMessage("Você já está conectado.");
+			return;
+		}
+
+		// Desconectar o outro cliente
+		otherPlayer->disconnect();
+	}
+
+	// Logout (já feito na situação de relogin)
+	if (!isRelog) {
+		// Enviar efeito de logout
+		if (!player->isInGhostMode()) {
+			g_game().addMagicEffect(player->getPosition(), CONST_ME_POFF);
+		}
+
+		// Desvincular o cliente do jogador
+		player->client = nullptr;
+
+		// Logout do personagem atual
+		g_game().removeCreature(player);
+	}
+
+	// Certificar-se de que a câmera seguirá o jogador
+	knownCreatureSet.clear();
+
+	// Copiar informações do cliente
+	otherPlayer->setOperatingSystem(operatingSystem);
+
+	// Definir o IP do jogador
+	otherPlayer->lastIP = getIP();
+
+	// Restaurar a comunicação com o cliente
+	otherPlayer->client = getThis();
+	this->player = otherPlayer;
+
+	if (isLogin) {
+		// Verificar a política de um jogador por conta
+		if (g_configManager().getBoolean(ONE_PLAYER_ON_ACCOUNT) && otherPlayer->getAccountType() < account::ACCOUNT_TYPE_GAMEMASTER && g_game().getPlayerByAccount(otherPlayer->getAccountId())) {
+			disconnectClient("Você só pode fazer login com um personagem\nde sua conta ao mesmo tempo.");
+			return;
+		}
+
+		// Carregar informações completas do jogador
+		if (!IOLoginData::loadPlayerById(otherPlayer, otherPlayer->getGUID())) {
+			disconnectClient("Seu personagem não pôde ser carregado.");
+			return;
+		}
+
+		// Colocar o jogador no mapa
+		if (!g_game().placeCreature(otherPlayer, otherPlayer->getLoginPosition())) {
+			if (!g_game().placeCreature(otherPlayer, otherPlayer->getTemplePosition(), false, true)) {
+				disconnectClient("A posição do templo está errada. Entre em contato com o administrador.");
+				return;
+			}
+		}
+
+		// Ativar recurso otc
+		if (operatingSystem >= CLIENTOS_OTCLIENT_LINUX) {
+			otherPlayer->registerCreatureEvent("ExtendedOpcode");
+		}
+
+		// Atualizar informações de último login
+		otherPlayer->lastLoginSaved = std::max<time_t>(time(nullptr), otherPlayer->lastLoginSaved + 1);
+	}
+
+	// Enviar descrição do mapa do jogo
+	sendMapDescription(player->getPosition());
+
+	// Enviar efeito de login
+	if (isLogin && !player->isInGhostMode()) {
+		g_game().addMagicEffect(player->getPosition(), CONST_ME_TELEPORT);
+	}
+
+	sendAddCreature(player, player->getPosition(), 0, true);
+}

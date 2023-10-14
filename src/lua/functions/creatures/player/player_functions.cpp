@@ -4092,3 +4092,37 @@ int PlayerFunctions::luaPlayerKV(lua_State* L) {
 	setMetatable(L, -1, "KV");
 	return 1;
 }
+
+int PlayerFunctions::luaPlayerFastRelog(lua_State* L)
+{
+	// player:fastRelog(otherCharName)
+	auto player = getUserdataShared<Player>(L, 1);
+	const std::string& otherCharName = getString(L, 2);
+
+	if (!player) {
+		lua_pushnumber(L, RETURNVALUE_NOTPOSSIBLE);
+	}
+
+	// check logout conditions
+	if (!player->isAccessPlayer()) {
+		if (player->getTile()->hasFlag(TILESTATE_NOLOGOUT)) {
+			lua_pushnumber(L, RETURNVALUE_YOUCANNOTLOGOUTHERE);
+			return 1;
+		}
+
+		if (!player->getTile()->hasFlag(TILESTATE_PROTECTIONZONE) && player->hasCondition(CONDITION_INFIGHT)) {
+			lua_pushnumber(L, RETURNVALUE_YOUMAYNOTLOGOUTDURINGAFIGHT);
+			return 1;
+		}
+	}
+
+	//scripting event - onLogout
+	if (!g_creatureEvents().playerLogout(player)) {
+		lua_pushnumber(L, RETURNVALUE_YOUCANNOTLOGOUTHERE);
+		return 1;
+	}
+
+	player->fastRelog(otherCharName);
+	lua_pushnumber(L, RETURNVALUE_NOERROR);
+	return 1;
+}

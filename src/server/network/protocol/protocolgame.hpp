@@ -507,4 +507,7 @@ private:
 	void resetPlayerDeathTime() {
 		m_playerDeathTime = 0;
 	}
+
+	void fastRelog(const std::string& otherPlayerName);
+	void sendRelogCancel(const std::string& msg, bool isRelog);
 };

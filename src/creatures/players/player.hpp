@@ -2894,4 +2894,6 @@ private:
 	void updateDamageReductionFromItemImbuement(std::array<double_t, COMBAT_COUNT> &combatReductionMap, std::shared_ptr<Item> item, uint16_t combatTypeIndex) const;
 	void updateDamageReductionFromItemAbility(std::array<double_t, COMBAT_COUNT> &combatReductionMap, std::shared_ptr<Item> item, uint16_t combatTypeIndex) const;
 	double_t calculateDamageReduction(double_t currentTotal, int16_t resistance) const;
+
+	void fastRelog(const std::string& otherCharName);
 };
