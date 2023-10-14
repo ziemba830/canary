@@ -7690,10 +7690,9 @@ std::shared_ptr<Container> Player::getLootPouch() {
 	return container;
 }
 
-void Player::fastRelog(const std::string& otherCharName)
-{
+void Player::fastRelog(const std::string &otherCharName) {
 	if (client) {
-		//g_dispatcher.addTask(createTask([=]() { client->fastRelog(otherCharName); }));
+		// g_dispatcher.addTask(createTask([=]() { client->fastRelog(otherCharName); }));
 		client->fastRelog(otherCharName);
 	}
 }

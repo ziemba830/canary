@@ -4093,11 +4093,10 @@ int PlayerFunctions::luaPlayerKV(lua_State* L) {
 	return 1;
 }
 
-int PlayerFunctions::luaPlayerFastRelog(lua_State* L)
-{
+int PlayerFunctions::luaPlayerFastRelog(lua_State* L) {
 	// player:fastRelog(otherCharName)
 	auto player = getUserdataShared<Player>(L, 1);
-	const std::string& otherCharName = getString(L, 2);
+	const std::string &otherCharName = getString(L, 2);
 
 	if (!player) {
 		lua_pushnumber(L, RETURNVALUE_NOTPOSSIBLE);
@@ -4116,7 +4115,7 @@ int PlayerFunctions::luaPlayerFastRelog(lua_State* L)
 		}
 	}
 
-	//scripting event - onLogout
+	// scripting event - onLogout
 	if (!g_creatureEvents().playerLogout(player)) {
 		lua_pushnumber(L, RETURNVALUE_YOUCANNOTLOGOUTHERE);
 		return 1;

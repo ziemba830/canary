@@ -8533,8 +8533,7 @@ void ProtocolGame::parseSaveWheel(NetworkMessage &msg) {
 	addGameTask(&Game::playerSaveWheel, player->getID(), msg);
 }
 
-void ProtocolGame::sendRelogCancel(const std::string& msg, bool isRelog)
-{
+void ProtocolGame::sendRelogCancel(const std::string &msg, bool isRelog) {
 	if (isRelog) {
 		disconnectClient(msg);
 		return;
@@ -8543,8 +8542,7 @@ void ProtocolGame::sendRelogCancel(const std::string& msg, bool isRelog)
 	player->sendCancelMessage(msg);
 }
 
-void ProtocolGame::fastRelog(const std::string& otherPlayerName)
-{
+void ProtocolGame::fastRelog(const std::string &otherPlayerName) {
 	// Verificar se o jogador está ativo
 	if (!player || player->isRemoved()) {
 		return;
