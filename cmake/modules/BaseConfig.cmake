@@ -1,8 +1,8 @@
 # *****************************************************************************
 # CMake Features
 # *****************************************************************************
-set(CMAKE_CXX_STANDARD 20)
-set(GNUCXX_MINIMUM_VERSION 11)
+set(CMAKE_CXX_STANDARD 23)
+set(GNUCXX_MINIMUM_VERSION 12)
 set(MSVC_MINIMUM_VERSION "19.32")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

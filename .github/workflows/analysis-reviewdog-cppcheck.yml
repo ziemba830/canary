@@ -12,7 +12,7 @@ on:
 jobs:
 
   cppcheck:
-    runs-on: ubuntu-latest
+    runs-on: Beats-ARM
     steps:
       - name: Cancel Previous Runs
         if: github.ref != 'refs/heads/main'

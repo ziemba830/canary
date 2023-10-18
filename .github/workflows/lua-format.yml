@@ -9,7 +9,7 @@ on:
       - 'data*/**'
 jobs:
   lua-formatter:
-    runs-on: ubuntu-latest
+    runs-on: Beats-ARM
     steps:
       - name: Set up Git
         if: ${{ github.ref != 'refs/heads/main' }}
