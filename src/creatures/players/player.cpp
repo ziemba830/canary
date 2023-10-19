@@ -19,6 +19,7 @@
 #include "game/game.hpp"
 #include "game/scheduling/dispatcher.hpp"
 #include "game/scheduling/task.hpp"
+#include "game/scheduling/save_manager.hpp"
 #include "grouping/familiars.hpp"
 #include "lua/creature/creatureevent.hpp"
 #include "lua/creature/events.hpp"
@@ -1739,16 +1740,12 @@ void Player::onRemoveCreature(std::shared_ptr<Creature> creature, bool isLogout)
 		}
 
 		if (tradePartner) {
-			g_game().internalCloseTrade(static_self_cast<Player>());
+			g_game().internalCloseTrade(player);
 		}
 
 		closeShopWindow();
 
-		for (uint32_t tries = 0; tries < 3; ++tries) {
-			if (IOLoginData::savePlayer(static_self_cast<Player>())) {
-				break;
-			}
-		}
+		g_saveManager().savePlayer(player);
 	}
 
 	if (creature == shopOwner) {
@@ -4048,7 +4045,9 @@ void Player::postRemoveNotification(std::shared_ptr<Thing> thing, std::shared_pt
 		assert(i ? i->getContainer() != nullptr : true);
 
 		if (i) {
-			requireListUpdate = i->getContainer()->getHoldingPlayer() != getPlayer();
+			if (auto container = i->getContainer()) {
+				requireListUpdate = container->getHoldingPlayer() != getPlayer();
+			}
 		} else {
 			requireListUpdate = newParent != getPlayer();
 		}
@@ -7651,6 +7650,7 @@ const std::unique_ptr<PlayerWheel> &Player::wheel() const {
 }
 
 void Player::sendLootMessage(const std::string &message) const {
+	auto party = getParty();
 	if (!party) {
 		sendTextMessage(MESSAGE_LOOT, message);
 		return;

@@ -493,13 +493,19 @@ public:
 	std::shared_ptr<Cylinder> getParent() override final {
 		return getTile();
 	}
-	void setParent(std::weak_ptr<Cylinder> cylinder) override final {
-		auto lockedCylinder = cylinder.lock();
-		if (lockedCylinder) {
-			auto newParent = lockedCylinder->getTile();
-			position = newParent->getPosition();
-			m_tile = newParent;
+
+	void setParent(std::shared_ptr<Cylinder> cylinder) override final {
+		if (!cylinder) {
+			g_logger().error("Creature::setParent: cylinder is nullptr, current position: {}", getPosition().toString());
+			return;
 		}
+		auto newParent = cylinder->getTile();
+		if (!newParent) {
+			g_logger().error("Creature::setParent: cylinder is not a tile, current position: {}", getPosition().toString());
+			return;
+		}
+		position = newParent->getPosition();
+		m_tile = newParent;
 	}
 
 	const Position &getPosition() override final {
