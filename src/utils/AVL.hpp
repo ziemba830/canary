@@ -1,10 +1,10 @@
 /**
-* Canary - A free and open-source MMORPG server emulator
-* Copyright (©) 2019-2022 OpenTibiaBR <opentibiabr@outlook.com>
-* Repository: https://github.com/opentibiabr/canary
-* License: https://github.com/opentibiabr/canary/blob/main/LICENSE
-* Contributors: https://github.com/opentibiabr/canary/graphs/contributors
-* Website: https://docs.opentibiabr.com/
+ * Canary - A free and open-source MMORPG server emulator
+ * Copyright (©) 2019-2022 OpenTibiaBR <opentibiabr@outlook.com>
+ * Repository: https://github.com/opentibiabr/canary
+ * License: https://github.com/opentibiabr/canary/blob/main/LICENSE
+ * Contributors: https://github.com/opentibiabr/canary/graphs/contributors
+ * Website: https://docs.opentibiabr.com/
  */
 #pragma once
 
@@ -56,7 +56,7 @@ private:
 
 	MemoryPool<Node> nodePool;
 
-	std::unique_ptr<Node> getNodeFromPool(const T& value) {
+	std::unique_ptr<Node> getNodeFromPool(const T &value) {
 		Node* newNode = nodePool.allocate();
 		newNode->value = value;
 		newNode->height = 1;
@@ -65,14 +65,14 @@ private:
 		return std::unique_ptr<Node>(newNode);
 	}
 
-	void returnNodeToPool(std::unique_ptr<Node>& node) {
+	void returnNodeToPool(std::unique_ptr<Node> &node) {
 		nodePool.deallocate(node.release());
 	}
 
 	std::unique_ptr<Node> root;
 	Comparator compare;
 
-	std::unique_ptr<Node> rotateLeft(std::unique_ptr<Node>& root) {
+	std::unique_ptr<Node> rotateLeft(std::unique_ptr<Node> &root) {
 		auto newRoot = std::move(root->right);
 		root->right = std::move(newRoot->left);
 		newRoot->left = std::move(root);
@@ -88,7 +88,7 @@ private:
 		return newRoot;
 	}
 
-	std::unique_ptr<Node> rotateRight(std::unique_ptr<Node>& root) {
+	std::unique_ptr<Node> rotateRight(std::unique_ptr<Node> &root) {
 		auto newRoot = std::move(root->left);
 		root->left = std::move(newRoot->right);
 		newRoot->right = std::move(root);
@@ -104,7 +104,7 @@ private:
 		return newRoot;
 	}
 
-	std::unique_ptr<Node> balance(std::unique_ptr<Node>& root) {
+	std::unique_ptr<Node> balance(std::unique_ptr<Node> &root) {
 		int heightLeft = root->left ? root->left->height : 0;
 		int heightRight = root->right ? root->right->height : 0;
 
@@ -139,8 +139,10 @@ private:
 		return std::move(root);
 	}
 
-	std::unique_ptr<Node> batchInsertHelper(const std::vector<T>& elements, int start, int end) {
-		if (start > end) return nullptr;
+	std::unique_ptr<Node> batchInsertHelper(const std::vector<T> &elements, int start, int end) {
+		if (start > end) {
+			return nullptr;
+		}
 
 		int mid = (start + end) / 2;
 
@@ -162,10 +164,10 @@ private:
 		return node;
 	}
 
-
-
-	std::unique_ptr<Node> insert(std::unique_ptr<Node>& root, const T& value, bool allowDuplicates) {
-		if (!root) return getNodeFromPool(value);
+	std::unique_ptr<Node> insert(std::unique_ptr<Node> &root, const T &value, bool allowDuplicates) {
+		if (!root) {
+			return getNodeFromPool(value);
+		}
 
 		int heightLeft = root->left ? root->left->height : 0;
 		int heightRight = root->right ? root->right->height : 0;
@@ -188,8 +190,10 @@ private:
 		return std::move(root);
 	}
 
-	std::unique_ptr<Node> removeNode(std::unique_ptr<Node>& root, const T& value) {
-		if (!root) return nullptr;
+	std::unique_ptr<Node> removeNode(std::unique_ptr<Node> &root, const T &value) {
+		if (!root) {
+			return nullptr;
+		}
 
 		if (compare(value, root->value)) {
 			root->left = removeNode(root->left, value);
@@ -227,10 +231,12 @@ private:
 		return std::move(root);
 	}
 
-	inline bool search(const std::unique_ptr<Node>& root, const T& value) const {
-		if (!root) return false;
+	inline bool search(const std::unique_ptr<Node> &root, const T &value) const {
+		if (!root) {
+			return false;
+		}
 
-        if (compare(value, root->value)) {
+		if (compare(value, root->value)) {
 			return search(root->left, value);
 		} else if (compare(root->value, value)) {
 			return search(root->right, value);
@@ -240,8 +246,10 @@ private:
 	}
 
 	template <typename U>
-	std::shared_ptr<U> searchObject(const std::unique_ptr<Node>& root, const T& value) const {
-		if (!root) return nullptr;
+	std::shared_ptr<U> searchObject(const std::unique_ptr<Node> &root, const T &value) const {
+		if (!root) {
+			return nullptr;
+		}
 
 		if (compare(value, root->value)) {
 			return searchObject<U>(root->left, value);
@@ -252,8 +260,10 @@ private:
 		}
 	}
 
-	void clearAndReturnToPool(std::unique_ptr<Node>& node) {
-		if (!node) return;
+	void clearAndReturnToPool(std::unique_ptr<Node> &node) {
+		if (!node) {
+			return;
+		}
 
 		clearAndReturnToPool(node->left);
 		clearAndReturnToPool(node->right);
@@ -262,8 +272,11 @@ private:
 	}
 
 public:
-	AVLTree(Comparator comp = Comparator()) : compare(comp) {}
-	~AVLTree() { clearAndReturnToPool(root); }
+	AVLTree(Comparator comp = Comparator()) :
+		compare(comp) { }
+	~AVLTree() {
+		clearAndReturnToPool(root);
+	}
 
 	void clearAll() {
 		root.reset();
@@ -276,31 +289,31 @@ public:
 		}
 	}
 
-	void batchInsert(const std::vector<T>& elements) {
+	void batchInsert(const std::vector<T> &elements) {
 		auto sorted_elements = elements;
 		std::sort(sorted_elements.begin(), sorted_elements.end(), compare);
 
 		root = batchInsertHelper(sorted_elements, 0, sorted_elements.size() - 1);
 	}
 
-	void insert(const T& value, bool allowDuplicates = false) {
+	void insert(const T &value, bool allowDuplicates = false) {
 		root = insert(root, value, allowDuplicates);
 	}
 
-	void remove(const T& value) {
+	void remove(const T &value) {
 		root = removeNode(root, value);
 	}
 
-	bool search(const T& value) const {
+	bool search(const T &value) const {
 		return search(root, value);
 	}
 
 	template <typename U>
-	std::shared_ptr<U> searchObject(const T& value) const {
+	std::shared_ptr<U> searchObject(const T &value) const {
 		return searchObject<U>(root, value);
 	}
 
-	static void benchmarkInsert(AVLTree<T>& tree, int NUM_OPERATIONS) {
+	static void benchmarkInsert(AVLTree<T> &tree, int NUM_OPERATIONS) {
 		std::default_random_engine generator;
 		std::uniform_int_distribution<T> distribution(1, 1000000);
 
@@ -312,7 +325,7 @@ public:
 		g_logger().info("Tempo para inserção AVL: - {}ms", bm.duration());
 	}
 
-	static void benchmarkInsert1(AVLTree<T>& tree) {
+	static void benchmarkInsert1(AVLTree<T> &tree) {
 		std::default_random_engine generator;
 		std::uniform_int_distribution<T> distribution(1, 1000000);
 
@@ -322,7 +335,7 @@ public:
 		g_logger().info("Tempo para 1 inserção AVL: - {}ms", bm.duration());
 	}
 
-	static void benchmarkSearch(AVLTree<T>& tree, int NUM_OPERATIONS) {
+	static void benchmarkSearch(AVLTree<T> &tree, int NUM_OPERATIONS) {
 		std::default_random_engine generator;
 		std::uniform_int_distribution<T> distribution(1, 1000000);
 
@@ -334,7 +347,7 @@ public:
 		g_logger().info("Tempo para busca AVL: - {}ms", bm.duration());
 	}
 
-	static void benchmarkSearch1(AVLTree<T>& tree) {
+	static void benchmarkSearch1(AVLTree<T> &tree) {
 		std::default_random_engine generator;
 		std::uniform_int_distribution<T> distribution(1, 1000000);
 
@@ -344,7 +357,7 @@ public:
 		g_logger().info("Tempo para 1 busca AVL: - {}ms", bm.duration());
 	}
 
-	static void benchmarkRemove(AVLTree<T>& tree, int NUM_OPERATIONS) {
+	static void benchmarkRemove(AVLTree<T> &tree, int NUM_OPERATIONS) {
 		std::default_random_engine generator;
 		std::uniform_int_distribution<T> distribution(1, 1000000);
 
@@ -356,13 +369,13 @@ public:
 		g_logger().info("Tempo para remoção AVL: - {}ms", bm.duration());
 	}
 
-	static void benchmarkClearAll(AVLTree<T>& tree) {
+	static void benchmarkClearAll(AVLTree<T> &tree) {
 		Benchmark bm;
 		tree.clearAll();
 		g_logger().info("Tempo para clearAll AVL: - {}ms", bm.duration());
 	}
 
-	static void benchmarkBatchInsert(AVLTree<T>& tree, int NUM_OPERATIONS) {
+	static void benchmarkBatchInsert(AVLTree<T> &tree, int NUM_OPERATIONS) {
 		std::default_random_engine generator;
 		std::uniform_int_distribution<T> distribution(1, 1000000);
 
@@ -377,16 +390,15 @@ public:
 		g_logger().info("Tempo para inserção em lote AVL: - {}ms", bm.duration());
 	}
 
-
-	static void benchmarkAVLTree(AVLTree<T>& tree) {
+	static void benchmarkAVLTree(AVLTree<T> &tree) {
 		const int NUM_OPERATIONS = 1000000;
 		tree.preallocate(NUM_OPERATIONS); // Prealocação de memória
 
-		benchmarkInsert(tree, NUM_OPERATIONS);   // Inserção individual
-		benchmarkSearch(tree, NUM_OPERATIONS);   // Busca
-		benchmarkRemove(tree, NUM_OPERATIONS);   // Remoção
-		benchmarkInsert1(tree);  // Inserção individual (uma operação)
-		benchmarkSearch1(tree);  // Busca (uma operação)
+		benchmarkInsert(tree, NUM_OPERATIONS); // Inserção individual
+		benchmarkSearch(tree, NUM_OPERATIONS); // Busca
+		benchmarkRemove(tree, NUM_OPERATIONS); // Remoção
+		benchmarkInsert1(tree); // Inserção individual (uma operação)
+		benchmarkSearch1(tree); // Busca (uma operação)
 		benchmarkClearAll(tree); // Limpeza
 
 		g_logger().info("Adiciono tudo novamente para medir o ClearAll");
@@ -396,5 +408,4 @@ public:
 		g_logger().info("Benchmark para inserção em lote");
 		benchmarkBatchInsert(tree, NUM_OPERATIONS); // Benchmark para inserção em lote
 	}
-
 };
