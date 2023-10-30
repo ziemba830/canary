@@ -59,9 +59,9 @@ monster.light = {
 monster.summon = {
 	maxSummons = 5,
 	summons = {
-		{ name = "Minotaur Hunter", chance = 15, interval = 1000, count = 2 },
-		{ name = "Minotaur Amazon", chance = 15, interval = 1000, count = 1 },
-		{ name = "Worm Princess", chance = 15, interval = 1000, count = 2 },
+		{ name = "Minotaur Guard", chance = 15, interval = 1000, count = 2 },
+		{ name = "Minotaur Archer", chance = 15, interval = 1000, count = 2 },
+		{ name = "Minotaur Mage", chance = 15, interval = 1000, count = 2 },
 	},
 }
 
@@ -86,9 +86,7 @@ monster.loot = {
 	{ id = 3049, chance = 10000 }, -- stealth ring
 	{ id = 3483, chance = 7410 }, -- fishing rod
 	{ id = 236, chance = 7410 }, -- strong health potion
-	{ id = 7401, chance = 900 }, -- minotaur trophy,
-	{ id = 21174, chance = 12000 }, -- mino lance
-	{ id = 21175, chance = 6000 }, -- mino shield
+	{ id = 3396, chance = 900 }, -- dwarven helmet
 }
 
 monster.attacks = {
